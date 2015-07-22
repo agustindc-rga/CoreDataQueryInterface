@@ -7,9 +7,10 @@
 //
 
 import Foundation
-
+/**
 extension QueryType {
     public func generate() -> IndexingGenerator<[QueryResultType]> {
         return try! all().generate()
     }
 }
+**/
