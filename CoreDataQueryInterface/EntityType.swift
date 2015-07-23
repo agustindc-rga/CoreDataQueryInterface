@@ -25,12 +25,19 @@ Returns the name of the entity corresponding to the current class.
 - returns: The name of the entity.
 */
 public func entityNameForClass(aClass: AnyClass, inManagedObjectModel managedObjectModel: NSManagedObjectModel) -> String? {
-    let className = String.fromCString(class_getName(aClass))!
+    let className = NSStringFromClass(aClass)
     var entityName: String?
     dispatch_sync(EntityCacheQueue) {
         entityName = EntityCache[className]
         if entityName == nil {
-            entityName = managedObjectModel.entities.filter({ $0.managedObjectClassName == className }).first!.name!
+            let entity = managedObjectModel.entities.filter({ 
+                $0.managedObjectClassName == className 
+            }).first ?? managedObjectModel.entities.filter({ 
+                // check without module name in case class has an @objc alias
+                $0.managedObjectClassName.componentsSeparatedByString(".").last! == className 
+            }).first
+            
+            entityName = entity?.name
             if entityName != nil {
                 EntityCache[className] = entityName
             }
