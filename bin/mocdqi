@@ -115,6 +115,12 @@ class Entity
     @attributes << attribute
   end
   def render(io)
+    io.puts "extension #{@name}: EntityType {"
+    io.indent do
+      io.puts "typealias EntityAttributeType = #{@name}#{$options.suffix}"
+    end
+    io.puts "}"
+    io.puts ""
     io.puts "#{$options.access_modifier}class #{@name}#{$options.suffix}: Attribute {"
     io.indent do
       @attributes.each do |attribute|
@@ -158,11 +164,22 @@ File::open(File::join(model_path, "#{model}.xcdatamodel/contents")) do |fd|
   end
 end
 
+def render_header(filename, io)
+  io.puts "//"
+  io.puts "// #{filename}"
+  io.puts "//"
+  io.puts ""
+  io.puts "import CoreDataQueryInterface"
+  io.puts ""
+end
+
 if $options.merged
-  output_file = File.join($options.output_path, "#{model}#{$options.suffix}.swift")
+  output_filename = "#{model}#{$options.suffix}.swift"
+  output_file = File.join($options.output_path, output_filename)
   if $options.force || !File.exists?(output_file)
     File::open(output_file, 'w') do |io|
       iw = IndentWriter::new(io)
+      render_header(output_filename, iw)
       entities.each do |entity|
         entity.render iw
       end
@@ -173,10 +190,13 @@ if $options.merged
   end
 else
   entities.each do |entity|
-    output_file = File.join($options.output_path, "#{entity.name}#{$options.suffix}.swift")
+    output_filename = "#{entity.name}#{$options.suffix}.swift"
+    output_file = File.join($options.output_path, output_filename)
     if $options.force || !File.exists?(output_file)
       File::open(output_file, 'w') do |io|
-        entity.render IndentWriter::new(io) 
+        iw = IndentWriter::new(io)
+        render_header(output_filename, iw)
+        entity.render iw
       end
       $stderr.puts "NOTICE: Wrote file #{output_file}."
     else
